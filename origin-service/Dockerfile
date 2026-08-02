@@ -7,7 +7,7 @@ COPY src ./src
 RUN mvn -q -e -B package -DskipTests
 
 # --- run stage ---
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 COPY --from=build /app/target/origin-service-1.0.0.jar app.jar
 ENV JAVA_OPTS="-Xmx256m"
