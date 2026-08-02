@@ -27,7 +27,6 @@ services:
   - type: web
     name: mini-cdn-origin
     runtime: docker
-    repo: https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME
     region: virginia
     plan: free
     dockerfilePath: ./origin-service/Dockerfile
@@ -39,7 +38,6 @@ services:
   - type: web
     name: mini-cdn-edge-virginia
     runtime: docker
-    repo: https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME
     region: virginia
     plan: free
     dockerfilePath: ./edge-service/Dockerfile
@@ -59,7 +57,6 @@ services:
   - type: web
     name: mini-cdn-edge-frankfurt
     runtime: docker
-    repo: https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME
     region: frankfurt
     plan: free
     dockerfilePath: ./edge-service/Dockerfile
@@ -79,7 +76,6 @@ services:
   - type: web
     name: mini-cdn-edge-singapore
     runtime: docker
-    repo: https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME
     region: singapore
     plan: free
     dockerfilePath: ./edge-service/Dockerfile
@@ -99,7 +95,6 @@ services:
   - type: web
     name: mini-cdn-router
     runtime: docker
-    repo: https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME
     region: virginia
     plan: free
     dockerfilePath: ./router-service/Dockerfile
@@ -123,7 +118,6 @@ services:
   - type: web
     name: mini-cdn-dashboard
     runtime: static
-    repo: https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME
     buildCommand: cd dashboard && npm install && npm run build
     staticPublishPath: ./dashboard/dist
     envVars:
