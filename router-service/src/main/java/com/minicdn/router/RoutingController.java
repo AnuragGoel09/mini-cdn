@@ -11,7 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +23,7 @@ public class RoutingController {
     private final NodeRegistry registry;
     private final RestTemplate restTemplate;
     private final EventBroadcaster broadcaster;
+    private static final Logger log = LoggerFactory.getLogger(RoutingController.class);
 
     public RoutingController(NodeRegistry registry, RestTemplate restTemplate, EventBroadcaster broadcaster) {
         this.registry = registry;
@@ -103,6 +105,7 @@ public class RoutingController {
         try {
             return restTemplate.getForEntity(node.url + "/cdn/{file}", byte[].class, file);
         } catch (RestClientException e) {
+            log.error("proxyToEdge failed: node={} url={} file={}",node.name,node.url,file, e);
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
                     "failed to reach edge node " + node.name + ": " + e.getMessage());
         }
