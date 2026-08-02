@@ -48,7 +48,7 @@ services:
       - key: REGION
         value: virginia
       - key: ORIGIN_URL
-        value: "https://mini-cdn-edge-virginia.onrender.com"
+        value: "https://mini-cdn-edge-origin.onrender.com"
       - key: CACHE_MAX_ENTRIES
         value: "200"
       - key: CACHE_TTL_SECONDS
@@ -67,7 +67,7 @@ services:
       - key: REGION
         value: frankfurt
       - key: ORIGIN_URL
-        value: "https://mini-cdn-edge-frankfurt.onrender.com"
+        value: "https://mini-cdn-edge-origin.onrender.com"
       - key: CACHE_MAX_ENTRIES
         value: "200"
       - key: CACHE_TTL_SECONDS
@@ -86,7 +86,7 @@ services:
       - key: REGION
         value: singapore
       - key: ORIGIN_URL
-        value: "https://mini-cdn-edge-singapore.onrender.com"
+        value: "https://mini-cdn-edge-origin.onrender.com"
       - key: CACHE_MAX_ENTRIES
         value: "200"
       - key: CACHE_TTL_SECONDS
