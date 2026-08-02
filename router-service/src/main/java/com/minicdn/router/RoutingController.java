@@ -37,6 +37,8 @@ public class RoutingController {
                                          @RequestParam(required = false) Double lat,
                                          @RequestParam(required = false) Double lon) {
 
+        long requestStart = System.currentTimeMillis();
+        log.info("route() received: file={} overrideRegion={}", file,overrideRegion);
         Double clientLat = lat;
         Double clientLon = lon;
         String clientRegionGuess = overrideRegion != null ? overrideRegion : "unknown";
@@ -66,7 +68,7 @@ public class RoutingController {
         String cacheStatus = Optional.ofNullable(edgeResponse.getHeaders().getFirst("X-Cache")).orElse("UNKNOWN");
 
         broadcaster.broadcastRouteEvent(file, clientRegionGuess, chosen.name, cacheStatus, measuredLatencyMs);
-
+        log.info("route() completed: file={} chosenNode={} totalMs={}",file chosen.name, System.currentTimeMillis() - requestStart);
         HttpHeaders headers = new HttpHeaders();
         headers.putAll(edgeResponse.getHeaders());
         headers.set("X-Router-Latency-Ms", String.valueOf(measuredLatencyMs));
