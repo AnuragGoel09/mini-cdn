@@ -48,7 +48,7 @@ services:
       - key: REGION
         value: virginia
       - key: ORIGIN_URL
-        value: "REPLACE_AFTER_FIRST_DEPLOY" # e.g. https://mini-cdn-origin.onrender.com
+        value: "https://mini-cdn-edge-virginia.onrender.com"
       - key: CACHE_MAX_ENTRIES
         value: "200"
       - key: CACHE_TTL_SECONDS
@@ -67,7 +67,7 @@ services:
       - key: REGION
         value: frankfurt
       - key: ORIGIN_URL
-        value: "REPLACE_AFTER_FIRST_DEPLOY"
+        value: "https://mini-cdn-edge-frankfurt.onrender.com"
       - key: CACHE_MAX_ENTRIES
         value: "200"
       - key: CACHE_TTL_SECONDS
@@ -86,7 +86,7 @@ services:
       - key: REGION
         value: singapore
       - key: ORIGIN_URL
-        value: "REPLACE_AFTER_FIRST_DEPLOY"
+        value: "https://mini-cdn-edge-singapore.onrender.com"
       - key: CACHE_MAX_ENTRIES
         value: "200"
       - key: CACHE_TTL_SECONDS
@@ -109,11 +109,11 @@ services:
       - key: ROUTER_LON
         value: "-77.4481"
       - key: EDGE_VIRGINIA_URL
-        value: "REPLACE_AFTER_FIRST_DEPLOY"
+        value: "https://mini-cdn-edge-virginia.onrender.com"
       - key: EDGE_FRANKFURT_URL
-        value: "REPLACE_AFTER_FIRST_DEPLOY"
+        value: "https://mini-cdn-edge-frankfurt.onrender.com"
       - key: EDGE_SINGAPORE_URL
-        value: "REPLACE_AFTER_FIRST_DEPLOY"
+        value: "https://mini-cdn-edge-singapore.onrender.com"
 
   - type: web
     name: mini-cdn-dashboard
@@ -122,6 +122,6 @@ services:
     staticPublishPath: ./dashboard/dist
     envVars:
       - key: VITE_ROUTER_URL
-        value: "REPLACE_AFTER_FIRST_DEPLOY" # router's onrender.com URL
+        value: "https://mini-cdn-router.onrender.com" # router's onrender.com URL
       - key: VITE_ORIGIN_URL
-        value: "REPLACE_AFTER_FIRST_DEPLOY" # origin's onrender.com URL
+        value: "https://mini-cdn-origin.onrender.com" # origin's onrender.com URL
