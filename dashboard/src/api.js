@@ -21,7 +21,7 @@ export async function fetchFiles(originUrl) {
   return res.json();
 }
 
-export async function requestFile(file, { overrideRegion, lat, lon } = {}) {
+export async function requestFile(file, { overrideRegion, lat, lon } = {}, attempt = 1) {
   const params = new URLSearchParams();
   if (overrideRegion) params.set('overrideRegion', overrideRegion);
   if (lat != null) params.set('lat', lat);
@@ -32,7 +32,11 @@ export async function requestFile(file, { overrideRegion, lat, lon } = {}) {
   const clientTripMs = Math.round(performance.now() - start);
 
   if (!res.ok) {
-    throw new Error(`GET /route/${file} failed: ${res.status}`);
+    if(attempt < 3){
+      await new Promise((r) =>setTimeout(r,1500 * attempt));
+      return requestFile(file, {overrideRegion,lat,lon},attempt = 1);
+    }
+    throw new Error(`GET /route/${file} failed: ${res.status} attempts: ${attempt}`);
   }
 
   return {
