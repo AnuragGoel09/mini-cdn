@@ -1,0 +1,133 @@
+# Render Blueprint — deploys the whole mini-cdn stack for $0.
+#
+# How to use:
+#   1. Push this repo to GitHub/GitLab.
+#   2. In the Render dashboard: New + > Blueprint > select this repo.
+#      Render reads this file and proposes all 6 services below at once.
+#   3. Render assigns each service a URL like https://mini-cdn-origin.onrender.com
+#      *before* it finishes deploying — grab those URLs from the dashboard
+#      and paste them into the placeholder env vars below (search for
+#      "REPLACE_AFTER_FIRST_DEPLOY"), then trigger a manual redeploy of the
+#      services that reference them (router-service depends on all 3 edges
+#      + origin; each edge depends on origin).
+#
+# Free-tier reality: Render's free web services spin down after 15 minutes
+# idle and take 30-60s to wake on the next request. First load after a
+# quiet period will be slow across every service that was asleep — that's
+# expected, not a bug. The dashboard's own polling (fetchNodes every 3s,
+# router's health probe every 5s) will keep everything awake as long as at
+# least one person has the dashboard open.
+#
+# No Mumbai region exists on Render — Singapore is the real nearest PoP,
+# which is itself a realistic CDN behavior (not every city gets its own
+# edge). The dashboard's "simulate client location" dropdown can still
+# pick Mumbai; the router will correctly send it to Singapore.
+
+services:
+  - type: web
+    name: mini-cdn-origin
+    runtime: docker
+    repo: https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME
+    region: virginia
+    plan: free
+    dockerfilePath: ./origin-service/Dockerfile
+    dockerContext: ./origin-service
+    envVars:
+      - key: PORT
+        value: "8080"
+
+  - type: web
+    name: mini-cdn-edge-virginia
+    runtime: docker
+    repo: https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME
+    region: virginia
+    plan: free
+    dockerfilePath: ./edge-service/Dockerfile
+    dockerContext: ./edge-service
+    envVars:
+      - key: PORT
+        value: "8081"
+      - key: REGION
+        value: virginia
+      - key: ORIGIN_URL
+        value: "REPLACE_AFTER_FIRST_DEPLOY" # e.g. https://mini-cdn-origin.onrender.com
+      - key: CACHE_MAX_ENTRIES
+        value: "200"
+      - key: CACHE_TTL_SECONDS
+        value: "60"
+
+  - type: web
+    name: mini-cdn-edge-frankfurt
+    runtime: docker
+    repo: https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME
+    region: frankfurt
+    plan: free
+    dockerfilePath: ./edge-service/Dockerfile
+    dockerContext: ./edge-service
+    envVars:
+      - key: PORT
+        value: "8081"
+      - key: REGION
+        value: frankfurt
+      - key: ORIGIN_URL
+        value: "REPLACE_AFTER_FIRST_DEPLOY"
+      - key: CACHE_MAX_ENTRIES
+        value: "200"
+      - key: CACHE_TTL_SECONDS
+        value: "60"
+
+  - type: web
+    name: mini-cdn-edge-singapore
+    runtime: docker
+    repo: https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME
+    region: singapore
+    plan: free
+    dockerfilePath: ./edge-service/Dockerfile
+    dockerContext: ./edge-service
+    envVars:
+      - key: PORT
+        value: "8081"
+      - key: REGION
+        value: singapore
+      - key: ORIGIN_URL
+        value: "REPLACE_AFTER_FIRST_DEPLOY"
+      - key: CACHE_MAX_ENTRIES
+        value: "200"
+      - key: CACHE_TTL_SECONDS
+        value: "60"
+
+  - type: web
+    name: mini-cdn-router
+    runtime: docker
+    repo: https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME
+    region: virginia
+    plan: free
+    dockerfilePath: ./router-service/Dockerfile
+    dockerContext: ./router-service
+    envVars:
+      - key: PORT
+        value: "8082"
+      - key: ROUTER_REGION
+        value: virginia
+      - key: ROUTER_LAT
+        value: "38.9517"
+      - key: ROUTER_LON
+        value: "-77.4481"
+      - key: EDGE_VIRGINIA_URL
+        value: "REPLACE_AFTER_FIRST_DEPLOY"
+      - key: EDGE_FRANKFURT_URL
+        value: "REPLACE_AFTER_FIRST_DEPLOY"
+      - key: EDGE_SINGAPORE_URL
+        value: "REPLACE_AFTER_FIRST_DEPLOY"
+
+  - type: web
+    name: mini-cdn-dashboard
+    runtime: static
+    repo: https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME
+    buildCommand: cd dashboard && npm install && npm run build
+    staticPublishPath: ./dashboard/dist
+    envVars:
+      - key: VITE_ROUTER_URL
+        value: "REPLACE_AFTER_FIRST_DEPLOY" # router's onrender.com URL
+      - key: VITE_ORIGIN_URL
+        value: "REPLACE_AFTER_FIRST_DEPLOY" # origin's onrender.com URL

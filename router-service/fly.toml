@@ -1,0 +1,42 @@
+# fly.toml for router-service
+# Set the edge URLs before deploying, e.g.:
+#   fly secrets set EDGE_VIRGINIA_URL=https://mini-cdn-edge-virginia.fly.dev \
+#                    EDGE_FRANKFURT_URL=https://mini-cdn-edge-frankfurt.fly.dev \
+#                    EDGE_SINGAPORE_URL=https://mini-cdn-edge-singapore.fly.dev \
+#                    --app mini-cdn-router
+#
+# If you change primary_region below, also update ROUTER_REGION/ROUTER_LAT/
+# ROUTER_LON so the router's own position (shown on the dashboard map, and
+# used to reason about probe-latency-as-distance) matches where it's
+# actually running:
+#   fly secrets set ROUTER_REGION=fra ROUTER_LAT=50.1109 ROUTER_LON=8.6821 \
+#                    --app mini-cdn-router
+app = "mini-cdn-router"
+primary_region = "iad"
+
+[build]
+
+[env]
+  PORT = "8082"
+  ROUTER_REGION = "iad"
+  ROUTER_LAT = "38.9517"
+  ROUTER_LON = "-77.4481"
+
+[http_service]
+  internal_port = 8082
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/nodes"
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1

@@ -1,0 +1,5 @@
+{
+  "project": "mini-cdn",
+  "description": "A miniature multi-region CDN with real edge caching and live geo-routing.",
+  "version": 1
+}

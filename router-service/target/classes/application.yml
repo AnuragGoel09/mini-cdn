@@ -1,0 +1,33 @@
+server:
+  port: ${PORT:8082}
+
+spring:
+  application:
+    name: router-service
+
+minicdn:
+  probe-interval-ms: ${PROBE_INTERVAL_MS:5000}
+  router:
+    region: ${ROUTER_REGION:virginia}
+    lat: ${ROUTER_LAT:38.9517}
+    lon: ${ROUTER_LON:-77.4481}
+  nodes:
+    - name: edge-virginia
+      url: ${EDGE_VIRGINIA_URL:http://localhost:8091}
+      region: virginia
+      lat: 38.9517
+      lon: -77.4481
+    - name: edge-frankfurt
+      url: ${EDGE_FRANKFURT_URL:http://localhost:8092}
+      region: frankfurt
+      lat: 50.1109
+      lon: 8.6821
+    - name: edge-singapore
+      url: ${EDGE_SINGAPORE_URL:http://localhost:8093}
+      region: singapore
+      lat: 1.3521
+      lon: 103.8198
+
+logging:
+  level:
+    root: INFO

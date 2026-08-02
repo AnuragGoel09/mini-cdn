@@ -1,0 +1,10 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: origin-service
+
+logging:
+  level:
+    root: INFO

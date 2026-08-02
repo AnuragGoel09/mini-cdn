@@ -1,0 +1,1 @@
+(pretend this is logo.png — swap in a real binary asset here for the live demo)

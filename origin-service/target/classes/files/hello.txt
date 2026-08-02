@@ -1,0 +1,4 @@
+Hello from the Mini CDN origin!
+Edit this file and re-request it through an edge node — the ETag
+will change and the edge's stale cached copy will be treated as a miss
+the next time its TTL expires.
