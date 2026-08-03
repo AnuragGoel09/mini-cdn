@@ -5,6 +5,7 @@ import StatsPanel from './components/StatsPanel';
 import EventLog from './components/EventLog';
 import { connectEventSocket, fetchNodes, fetchRouterInfo } from './api';
 import { SIMULATED_REGIONS } from './regions';
+import { SIMULATED_REGIONS, ORIGIN_LOCATION } from './regions';
 
 const NODE_POLL_MS = 3000;
 
@@ -70,6 +71,7 @@ export default function App() {
           from: clientLoc,
           router: { lat: router.lat, lon: router.lon },
           to: { lat: node.lat, lon: node.lon },
+          origin: { lat: ORIGIN_LOCATION.lat, lon: ORIGIN_LOCATION.lon },   // ← new line
           cacheStatus,
           startedAt: performance.now(),
         },
