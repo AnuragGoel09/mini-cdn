@@ -1,0 +1,15 @@
+# generated build/output folders
+edge-service/target/
+origin-service/target/
+router-service/target/
+dashboard/node_modules/
+dashboard/dist/
+dashboard/.vite/
+
+# local editor/IDE metadata
+.idea/
+.vscode/
+.DS_Store
+
+# lockfile we don't need to track for the demo
+/dashboard/package-lock.json
