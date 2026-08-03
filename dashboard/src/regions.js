@@ -6,3 +6,4 @@ export const SIMULATED_REGIONS = [
   { key: 'sydney', label: 'Sydney', lat: -33.8688, lon: 151.2093 },
   { key: 'sao_paulo', label: 'São Paulo', lat: -23.5505, lon: -46.6333 },
 ];
+export const ORIGIN_LOCATION = { lat: 38.9517, lon: -77.4481, label: 'Origin (source of truth)' };
