@@ -4,7 +4,6 @@ import Controls from './components/Controls';
 import StatsPanel from './components/StatsPanel';
 import EventLog from './components/EventLog';
 import { connectEventSocket, fetchNodes, fetchRouterInfo } from './api';
-import { SIMULATED_REGIONS } from './regions';
 import { SIMULATED_REGIONS, ORIGIN_LOCATION } from './regions';
 
 const NODE_POLL_MS = 3000;
