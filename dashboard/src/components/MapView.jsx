@@ -11,6 +11,19 @@ function colorForCache(status) {
   return 'var(--accent-cyan)';
 }
 
+// If the router happens to be co-located with an edge (common — the
+// control plane is often deployed alongside one region), nudge its
+// *displayed* position slightly so the two markers don't visually stack.
+// This only affects rendering; the real coordinates used for any
+// distance/geography logic (all server-side) are untouched.
+function displayCoordsFor(routerInfo, nodes) {
+  const collidesWithEdge = nodes.some(
+    (n) => Math.abs(n.lat - routerInfo.lat) < 0.01 && Math.abs(n.lon - routerInfo.lon) < 0.01
+  );
+  if (!collidesWithEdge) return [routerInfo.lat, routerInfo.lon];
+  return [routerInfo.lat + 3, routerInfo.lon + 3];
+}
+
 function lerp(a, b, t) {
   return a + (b - a) * t;
 }
