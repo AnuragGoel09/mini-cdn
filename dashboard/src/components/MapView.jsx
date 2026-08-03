@@ -29,34 +29,53 @@ function lerp(a, b, t) {
 }
 
 /**
- * The real request path is two hops: client → router (the router decides
- * and proxies), then router → edge (the actual fetch/cache lookup). We
- * animate both legs explicitly instead of drawing one straight line from
- * client to edge — that single-line version was easier to look at, but it
- * hid the very design tradeoff (router-in-the-data-path) worth showing.
+ * The real request path is a three-stage flow for the cache-miss case:
+ * client → router (route selection / proxy decision),
+ * router → edge (the selected edge actually serves the file),
+ * edge → origin (only when the edge needs to fill its cache).
+ *
+ * For a HIT, the origin leg is omitted because the content is served from
+ * the edge cache and never needs to pull from the origin.
  */
 function AnimatedPacket({ packet, now }) {
   const elapsed = now - packet.startedAt;
   const t = Math.min(1, elapsed / PACKET_DURATION_MS);
 
-  const legBoundary = 0.42; // client→router is the shorter, "lookup" leg
+  const routeBoundary = 0.34;
+  const edgeBoundary = 0.68;
+  const isMiss = packet.cacheStatus === 'MISS';
+
   let lat, lon, legColor;
 
-  if (t < legBoundary) {
-    const legT = t / legBoundary;
+  if (t < routeBoundary) {
+    const legT = t / routeBoundary;
     const eased = 1 - Math.pow(1 - legT, 2);
     lat = lerp(packet.from.lat, packet.router.lat, eased);
     lon = lerp(packet.from.lon, packet.router.lon, eased);
-    legColor = 'var(--accent-cyan)'; // request hop: not yet known hit/miss
-  } else {
-    const legT = (t - legBoundary) / (1 - legBoundary);
+    legColor = 'var(--accent-cyan)';
+  } else if (t < edgeBoundary) {
+    const legT = (t - routeBoundary) / (edgeBoundary - routeBoundary);
     const eased = 1 - Math.pow(1 - legT, 2);
     lat = lerp(packet.router.lat, packet.to.lat, eased);
     lon = lerp(packet.router.lon, packet.to.lon, eased);
-    legColor = colorForCache(packet.cacheStatus); // fetch hop: hit/miss now known
+    legColor = colorForCache(packet.cacheStatus);
+  } else if (isMiss) {
+    const legT = (t - edgeBoundary) / (1 - edgeBoundary);
+    const eased = 1 - Math.pow(1 - legT, 2);
+    lat = lerp(packet.to.lat, packet.origin.lat, eased);
+    lon = lerp(packet.to.lon, packet.origin.lon, eased);
+    legColor = 'var(--accent-amber)';
+  } else {
+    // HIT responses end at the edge; the last hop never needs to reach origin.
+    const legT = (t - edgeBoundary) / (1 - edgeBoundary);
+    const eased = 1 - Math.pow(1 - legT, 2);
+    lat = lerp(packet.to.lat, packet.to.lat, eased);
+    lon = lerp(packet.to.lon, packet.to.lon, eased);
+    legColor = colorForCache(packet.cacheStatus);
   }
 
   const opacity = t < 0.85 ? 1 : 1 - (t - 0.85) / 0.15;
+  const cacheColor = colorForCache(packet.cacheStatus);
 
   return (
     <>
@@ -72,8 +91,17 @@ function AnimatedPacket({ packet, now }) {
           [packet.router.lat, packet.router.lon],
           [packet.to.lat, packet.to.lon],
         ]}
-        pathOptions={{ color: colorForCache(packet.cacheStatus), weight: 1, opacity: opacity * 0.3, dashArray: '2 6' }}
+        pathOptions={{ color: cacheColor, weight: 1, opacity: opacity * 0.3, dashArray: '2 6' }}
       />
+      {isMiss && (
+        <Polyline
+          positions={[
+            [packet.to.lat, packet.to.lon],
+            [packet.origin.lat, packet.origin.lon],
+          ]}
+          pathOptions={{ color: 'var(--accent-amber)', weight: 1, opacity: opacity * 0.3, dashArray: '2 6' }}
+        />
+      )}
       <CircleMarker
         center={[lat, lon]}
         radius={5}

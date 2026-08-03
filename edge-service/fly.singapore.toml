@@ -11,7 +11,7 @@ primary_region = "sin"
   # Set the real origin-service URL after you've deployed it, e.g.:
   # fly secrets set ORIGIN_URL=https://mini-cdn-origin.fly.dev --app mini-cdn-edge-singapore
   ORIGIN_URL = "https://mini-cdn-origin.fly.dev"
-  CACHE_MAX_ENTRIES = "200"
+  CACHE_MAX_ENTRIES = "3"
   CACHE_TTL_SECONDS = "60"
 
 [http_service]
