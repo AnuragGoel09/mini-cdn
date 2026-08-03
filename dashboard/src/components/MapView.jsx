@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ORIGIN_LOCATION } from '../regions';
 
-const ORIGIN = { name: 'origin', ...ORIGIN_LOCATION };
-
-const MS_PER_HOP = 480;
+const ORIGIN = { name: 'origin', label: 'Origin (source of truth)', lat: 38.9517, lon: -77.4481 };
+const PACKET_DURATION_MS = 1400;
 
 function colorForCache(status) {
   if (status === 'HIT') return 'var(--accent-green)';
@@ -13,79 +11,73 @@ function colorForCache(status) {
   return 'var(--accent-cyan)';
 }
 
-// displayCoordsFor stays here, unchanged
+// If the router happens to be co-located with an edge (common — the
+// control plane is often deployed alongside one region), nudge its
+// *displayed* position slightly so the two markers don't visually stack.
+// This only affects rendering; the real coordinates used for any
+// distance/geography logic (all server-side) are untouched.
+function displayCoordsFor(routerInfo, nodes) {
+  const collidesWithEdge = nodes.some(
+    (n) => Math.abs(n.lat - routerInfo.lat) < 0.01 && Math.abs(n.lon - routerInfo.lon) < 0.01
+  );
+  if (!collidesWithEdge) return [routerInfo.lat, routerInfo.lon];
+  return [routerInfo.lat + 3, routerInfo.lon + 3];
+}
 
 function lerp(a, b, t) {
   return a + (b - a) * t;
 }
 
-function flatDistance(a, b) {
-  return Math.hypot(a.lat - b.lat, a.lon - b.lon);
-}
-
-function buildPath(packet) {
-  const points = [packet.from, packet.router, packet.to];
-  const colors = ['var(--accent-cyan)', 'var(--accent-cyan)'];
-
-  if (packet.cacheStatus === 'MISS' && packet.origin) {
-    points.push(packet.origin, packet.to);
-    colors.push(colorForCache('MISS'), colorForCache('MISS'));
-  }
-
-  points.push(packet.router, packet.from);
-  colors.push(colorForCache(packet.cacheStatus), colorForCache(packet.cacheStatus));
-
-  return { points, colors };
-}
-
+/**
+ * The real request path is two hops: client → router (the router decides
+ * and proxies), then router → edge (the actual fetch/cache lookup). We
+ * animate both legs explicitly instead of drawing one straight line from
+ * client to edge — that single-line version was easier to look at, but it
+ * hid the very design tradeoff (router-in-the-data-path) worth showing.
+ */
 function AnimatedPacket({ packet, now }) {
-  const { points, colors } = buildPath(packet);
-
-  const segmentDistances = points.slice(1).map((p, i) => Math.max(flatDistance(points[i], p), 0.5));
-  const totalDistance = segmentDistances.reduce((a, b) => a + b, 0);
-  const totalDuration = colors.length * MS_PER_HOP;
-  const segmentDurations = segmentDistances.map((d) => (d / totalDistance) * totalDuration);
-
   const elapsed = now - packet.startedAt;
-  const t = Math.min(1, elapsed / totalDuration);
-  const elapsedMs = t * totalDuration;
+  const t = Math.min(1, elapsed / PACKET_DURATION_MS);
 
-  let cursor = 0;
-  let segIndex = 0;
-  for (let i = 0; i < segmentDurations.length; i++) {
-    if (elapsedMs <= cursor + segmentDurations[i] || i === segmentDurations.length - 1) {
-      segIndex = i;
-      break;
-    }
-    cursor += segmentDurations[i];
+  const legBoundary = 0.42; // client→router is the shorter, "lookup" leg
+  let lat, lon, legColor;
+
+  if (t < legBoundary) {
+    const legT = t / legBoundary;
+    const eased = 1 - Math.pow(1 - legT, 2);
+    lat = lerp(packet.from.lat, packet.router.lat, eased);
+    lon = lerp(packet.from.lon, packet.router.lon, eased);
+    legColor = 'var(--accent-cyan)'; // request hop: not yet known hit/miss
+  } else {
+    const legT = (t - legBoundary) / (1 - legBoundary);
+    const eased = 1 - Math.pow(1 - legT, 2);
+    lat = lerp(packet.router.lat, packet.to.lat, eased);
+    lon = lerp(packet.router.lon, packet.to.lon, eased);
+    legColor = colorForCache(packet.cacheStatus); // fetch hop: hit/miss now known
   }
 
-  const segT = Math.min(1, (elapsedMs - cursor) / segmentDurations[segIndex]);
-  const eased = 1 - Math.pow(1 - segT, 2);
-  const from = points[segIndex];
-  const to = points[segIndex + 1];
-  const lat = lerp(from.lat, to.lat, eased);
-  const lon = lerp(from.lon, to.lon, eased);
-  const dotColor = colors[segIndex];
-
-  const opacity = t < 0.9 ? 1 : 1 - (t - 0.9) / 0.1;
+  const opacity = t < 0.85 ? 1 : 1 - (t - 0.85) / 0.15;
 
   return (
     <>
-      {points.slice(1).map((p, i) => (
-        <Polyline
-          key={i}
-          positions={[
-            [points[i].lat, points[i].lon],
-            [p.lat, p.lon],
-          ]}
-          pathOptions={{ color: colors[i], weight: 1, opacity: opacity * 0.3, dashArray: '2 6' }}
-        />
-      ))}
+      <Polyline
+        positions={[
+          [packet.from.lat, packet.from.lon],
+          [packet.router.lat, packet.router.lon],
+        ]}
+        pathOptions={{ color: 'var(--accent-cyan)', weight: 1, opacity: opacity * 0.3, dashArray: '2 6' }}
+      />
+      <Polyline
+        positions={[
+          [packet.router.lat, packet.router.lon],
+          [packet.to.lat, packet.to.lon],
+        ]}
+        pathOptions={{ color: colorForCache(packet.cacheStatus), weight: 1, opacity: opacity * 0.3, dashArray: '2 6' }}
+      />
       <CircleMarker
         center={[lat, lon]}
         radius={5}
-        pathOptions={{ color: dotColor, fillColor: dotColor, fillOpacity: opacity, opacity, weight: 2 }}
+        pathOptions={{ color: legColor, fillColor: legColor, fillOpacity: opacity, opacity, weight: 2 }}
       />
     </>
   );
