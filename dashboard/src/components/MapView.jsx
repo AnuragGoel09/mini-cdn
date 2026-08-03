@@ -119,7 +119,7 @@ export default function MapView({ nodes, clientLocation, packets, routerInfo }) 
 
         {routerInfo && (
           <CircleMarker
-            center={displayCoordsFor(routerInfo, nodes)}
+            center={[routerInfo.lat, routerInfo.lon]}
             radius={9}
             pathOptions={{ color: 'var(--accent-cyan)', fillColor: 'var(--bg)', fillOpacity: 0.9, weight: 3, dashArray: '3 3' }}
           >
