@@ -75,7 +75,20 @@ public class RoutingController {
                 file, chosen.name, System.currentTimeMillis() - requestStart);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.putAll(edgeResponse.getHeaders());
+        // Only forward the specific headers we actually need — copying
+        // hop-by-hop headers like Content-Length/Transfer-Encoding/Connection
+        // from the edge's response can conflict with what Tomcat itself sets
+        // when writing our response, producing a malformed response that
+        // Render's proxy reports upstream as a generic, bodyless 502.
+        String xCache = edgeResponse.getHeaders().getFirst("X-Cache");
+        String xCacheNode = edgeResponse.getHeaders().getFirst("X-Cache-Node");
+        String etag = edgeResponse.getHeaders().getFirst(HttpHeaders.ETAG);
+        if (xCache != null) headers.set("X-Cache", xCache);
+        if (xCacheNode != null) headers.set("X-Cache-Node", xCacheNode);
+        if (etag != null) headers.set(HttpHeaders.ETAG, etag);
+        if (edgeResponse.getHeaders().getContentType() != null) {
+            headers.setContentType(edgeResponse.getHeaders().getContentType());
+        }
         headers.set("X-Router-Latency-Ms", String.valueOf(measuredLatencyMs));
         headers.set("X-Client-Region-Guess", clientRegionGuess);
 
